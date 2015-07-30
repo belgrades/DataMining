@@ -1,0 +1,3 @@
+datos <- data ("iris")
+
+?dist
