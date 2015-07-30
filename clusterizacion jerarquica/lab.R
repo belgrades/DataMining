@@ -36,4 +36,18 @@ dendrograma <- as.dendrogram(cluster)
 corte <- cut(dendrograma,h=3)$upper
 plot(corte, main = "Corte con altura 3")
 
-table(cutree(cluster, h=3))
+table(cutree(cluster, h=3))## h altura , k= k clusters
+
+filas <- cutree(cluster, h=3)
+table(iris[filas,5])
+
+
+
+## @knitr centroid
+
+cluster <- hclust(distancia,method = "centroid")
+
+
+## @knitr median
+
+cluster <- hclust(distancia,method = "median")
