@@ -4,7 +4,7 @@ data ("iris")
 datos <- iris
 
 ## NAs by coercion for string in species
-distancia <- dist(datos) 
+distancia <- dist(datos[,-5]) 
 dist(datos,"manhattan")
 length(dist(datos)) ## = nrow(datos)*(nrow(datos)-1)/2
 
@@ -13,7 +13,6 @@ plot(cluster)
 
 identify(cluster,function(i) print(table(iris[i,5])))
 identify(cluster,function(i) print(length(i)))
-
 
 ## @knitr mtcars_set
 
@@ -30,3 +29,11 @@ plot(cluster)
 
 identify(cluster,function(i) print(table(iris[i,5])))
 identify(cluster,function(i) print(length(i)))
+
+## @knitr @cut_tree
+
+dendrograma <- as.dendrogram(cluster)
+corte <- cut(dendrograma,h=3)$upper
+plot(corte, main = "Corte con altura 3")
+
+table(cutree(cluster, h=3))
