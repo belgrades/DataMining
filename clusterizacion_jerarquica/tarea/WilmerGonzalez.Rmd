@@ -1,0 +1,85 @@
+---
+title: "Tarea 4"
+author: "Wilmer Gonzalez"
+geometry: margin=3cm
+date: "19 de junio de 2015"
+header-includes:
+   - \usepackage{bbm}
+output: 
+  pdf_document:
+    toc: true
+    number_sections: true
+    fig_width: 7
+---
+***
+# Presentacón del problema
+
+Responder todas las preguntas presentadas por _Abastos Crema_ usando los métodos *hcluster* o *kmeans*
+
+# Descripción del set de datos
+
+Muestras de laboratorio provistas por el cliente.
+
+```{r echo=F,warning=F,eval=FALSE}
+data <- data.frame()
+aux <- data.frame()
+
+for(i in dir()){
+  aux <- read.csv2(i,header = T,sep = ",",dec = ".")
+  names(aux)<- c("index","x","y","class")
+  id <- rep(substr(i,nchar(i)-4,nchar(i)-4),nrow(aux))
+  aux <- cbind(id,aux)
+  data <- rbind(data,aux)
+  aux <- NULL
+}
+rm("aux","id","i")
+data
+
+```
+
+***
+
+# Respuestas
+
+1.  Grafica de los puntos contenidos en cada set de datos:
+
+```{r echo=FALSE, eval=FALSE}
+for(i in 1:4){
+  subs<- subset(data,subset = data$id == i)
+  plot(subs$x,subs$y,col =subs$class, xlab = "x",ylab = "y",main = paste("Set de datos",i,sep=" "))
+}
+```
+
+2.  Sea una matriz de disimilaridades o distancias $D_{n*n}$ es una matriz tal que su elemento $i, j$ es una
+disimilaridad $d(ij)$ tal que $\forall i, j, k$:
+	+ $d(i,j) \ge 0$ 
+	+ $d(i,j) = 0$
+	+ $d(i,j) = d(j,i)$
+	+ $d(i,j) \le d(i,k) + d(k,j)$
+
+donde D es una matriz simetrica y su diagonal son 0.
+\newpage
+
+Para la disimilaridad $d(i,j)$ representa una medida de la diferencia entre dos observaciones $x_{i}$ y $x_{j}$ en este caso usaremos la disimilaridad basada en distancia manhattan dado que ningun valor :
+
+$d(i,j) =  \sqrt{\sum_{i=1}^{p}(x_{ic}-x_{cj})^2}$
+
+$d(i,j) =  \sum_{i=1}^{p}\|(x_{ic}-x_{cj})\|$
+
+especificamente el criterio de vecino mas cercano expresado como :
+
+$d_{UV}=min( d_{ij} ): i \in U, j \in V$
+
+ya que, los conglomerados formados por este data set no poseen formas estrictamente esfericas y por lo tanto se ajustarian mas (teoricamente) las comparaciones individuales de vecino mas cernano.
+
+3.  Para cada dataset se generaron los siguientes dendogramas:
+
+```{r echo=FALSE, eval=FALSE}
+for(i in 1:4){
+  subs<- subset(data,subset = data$id == i)
+  distance <- dist(subs[-c(1,2,5)],method = "manhattan")
+  cluster <- hclust(distance,method = "single")
+}
+```
+
+#
