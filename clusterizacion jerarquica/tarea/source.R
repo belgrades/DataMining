@@ -1,13 +1,19 @@
 setwd("HCluster/Data")
 
+
 data <- data.frame()
+aux <- data.frame()
 
 for(i in dir()){
-  data<- read.csv2(i,header = T,sep = ",",dec = ".")
-  plot(data$X,data$Y,col=data$class, main=i,xlab="X", ylab="Y")
+  aux <- read.csv2(i,header = T,sep = ",",dec = ".")
+  names(aux)<- c("index","x","y","class")
+  id <- rep(substr(i,nchar(i)-4,nchar(i)-4),nrow(aux))
+  aux <- cbind(id,aux)
+  data <- rbind(data,aux)
+  aux <- NULL
 }
-rm("data")
-
+data
+rm("data","aux")
 
 metodos <- c("ward.D", "ward.D2", "single", "complete", "average", "mcquitty","median","centroid")
 
