@@ -2,9 +2,32 @@
 title: "Lab_1"
 author: "Ana Perez"
 date: "18 de junio de 2015"
-output: html_document
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
 ---
-```{r}
+
+Estamos tratando de predecir la clasificación de un carro de acuerdo a ciertos atributos. El data set que se utilizará se encuentra en el siguiente [repositorio](http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.names).
+
+Para predecir la clasificación de los carros, se utilizará árboles de decisión.
+
+##Variables del Data set
+
+Nombre     |   Tipo  | D.A|          Rango         | Explicacion
+-----------| :-----: | :-:| :--------------------: | :---------:
+Buying     | Nominal | No | low, med, high, v-high | Precio de compra del carro
+Maint      | Nominal | No | low, med, high, v-high | Precio del mantenimiento
+Doors      | Nominal | No | 2,3,4,5-more           | Número de puertas
+Persons    | Nominal | No | 2,4-more               | Capacidad en términos de personas
+Lug_Boot   | Nominal | No | small, med, big        | El tamaño del maletero
+Safety     | Nominal | No | low, med, high         | Seguridad estimada del carro
+
+##Instalando las liberías necesarias
+Lo primero que debemos realizar es instalar las librerías necesarias para poder realizar la predicción.
+
+```{r message=FALSE,echo=TRUE}
 #Creamos la función que recibe los paquetes
 install = function(pkg){
   #Si ya está instalado, no lo instala.
@@ -22,7 +45,8 @@ archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071","rpart.pl
 foreach(i = archive) %do% install(i)
 ```
 
-Inicialmente, descargamos la data a analizar.
+##Cargando la data
+Luego de que tenemos las librerías necesarias, procedemos a cargar la data del data set.
 
 ```{r}
 #Carga de la data
@@ -32,43 +56,82 @@ data = read.csv(url, header=F, sep = ",")
 names(data) = c("buying", "maint", "doors", "persons", "lug_boot", "safety", "class")
 ```
 
-Una vez descaraga la data, procedemos a conservar solo las columnas que nos interesen. Usando un criterio particular, las columnas que mas nos interesan son "buying", "maint", "persons" y "safety". La columna "safety" es la mas importante ya que las personas cuando compran un carro quieren sentirse seguros en el mismo. Por ello, tambien podemos observar que particionando la data por la clase, si realizamos una iteracion de Information Gain, la columna con mayor ganancia es "safety".
+##Seleccionando variable
+Una vez descargada la data, procedemos a conservar solo las columnas que nos interesen. Usando un criterio particular, las columnas que mas nos interesan son "buying", "maint", "persons", "safety" y "class". La columna más importante es "class", ya que ella nos indica las clases de cada carro del set de dato. Esta columna, será la que utilizaremos para poder predecir las clases de otros carros fuera del set de datos.
 
 ```{r}
-#Test de Information Gain
-InfoGainAttributeEval(class ~ . , data = data);
-
 #Seleccionamos las columnas de interes
-mydata <- data[-c(3,5,7)]
+mydata <- data[-c(3,5)]
 ```
 
+##Particionando la data
 Ahora, particionamos la data en entrenamiento y prueba. Usamos un porcentaje de 80% para entrenamiento y un 20% para pruebas.
 
 ```{r}
-trainIndex <- createDataPartition(mydata$safety, p = .8, list = FALSE, times = 2);
-mydataTrain <- mydata[ trainIndex,];
-mydataText <- mydata[-trainIndex,];
+trainIndex <- createDataPartition(mydata$class, p = .8, list = FALSE)
+Training <- mydata[trainIndex,]
+Test <- mydata[-trainIndex,]
 ```
 
-Aplicamos el algoritmo C4.5 de RWeka y generamos el arbol de decision
+##Aplicando C4.5
+Aplicamos el algoritmo C4.5 de RWeka (conocido en Weka como j48).
 
 ```{r}
-treeModel <- C5.0(x = mydataTrain, y = mydataTrain$safety);
-ModeloArbol <- rpart(safety ~ ., data=mydataTrain, parms=list(split="information"));
-rpart.plot(ModeloArbol, type=0)
+treeModel <- J48(class ~ ., data=Training)
+Modelo <- plot(treeModel)
+MCModelo <- confusionMatrix(treeModel$predictions,Training$class)
 ```
 
-Predecimos la data de la particion de Prueba
+
+##Aplicando rpart
+Utilizando el método rpart, generamos diferentes árboles de decisión. Esto lo logramos, modificando los parámetros de rpart(control).
 
 ```{r}
-Prediccion <- predict(ModeloArbol, mydataText,type="class")
-Prediccion
+tree1 <- rpart(formula = class ~ ., data=Training, method = "class", control=rpart.control(minsplit=20, cp=0.01))
+rpart.plot(tree1)
+
+tree2 <- rpart(formula = class ~ ., data=Training, method = "class", control=rpart.control(minsplit=100, cp=0.01))
+rpart.plot(tree2)
+
+tree3 <- rpart(formula = class ~ ., data=Training, method = "class", control=rpart.control(minsplit=500, cp=0.01))
+rpart.plot(tree3)
+
+tree4 <- rpart(formula = class ~ ., data=Training, method = "class", control=rpart.control(minsplit=900, cp=0.01))
+rpart.plot(tree4)
 ```
 
-Por ultimo, generamos la matriz de confusion.
+###Prediciendo la data
+Procedemos a probar los distintos modelos con la partición de prueba.
 
 ```{r}
-MC <- table(mydataText[, "safety"],Prediccion)
-MC
+Prediccion1 <- predict(tree1, Test,type="class")
+
+Prediccion2 <- predict(tree2, Test,type="class")
+
+Prediccion3 <- predict(tree3, Test,type="class")
+
+Prediccion4 <- predict(tree4, Test,type="class")
 ```
+
+###Generando la matriz de confusión
+Por ultimo, generamos la matriz de confusion de cada escenario.
+
+```{r}
+MC1 <- confusionMatrix(Test[, "class"], Prediccion1)
+
+MC2 <- confusionMatrix(Test[, "class"], Prediccion2)
+
+MC3 <- confusionMatrix(Test[, "class"], Prediccion3)
+
+MC4 <- confusionMatrix(Test[, "class"], Prediccion4)
+```
+
+###Comparando la exactitud de los diferentes modelos
+```{r echo=TRUE}
+acc1 <- MC1$overall[1]
+acc2 <- MC2$overall[1]
+acc3 <- MC3$overall[1]
+acc4 <- MC4$overall[1]
+```
+
 
