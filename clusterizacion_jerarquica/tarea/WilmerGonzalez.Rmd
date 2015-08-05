@@ -12,14 +12,14 @@ output:
     toc: yes
 ---
 ***
-# Presentacón del problema
+# Presentación del problema
 
 Responder todas las preguntas presentadas por _Abastos Crema_ usando los métodos *hcluster* o *kmeans*
 
 # Descripción del set de datos
 
 Muestras de laboratorio provistas por el cliente.
-```{r eval=F}
+```{r }
 data1 <- read.csv("entrada_1.csv",header = T,sep = ",",dec = ".")
 data2 <- read.csv("entrada_2.csv",header = T,sep = ",",dec = ".")
 data3 <- read.csv("entrada_3.csv",header = T,sep = ",",dec = ".")
@@ -28,7 +28,9 @@ data4 <- read.csv("entrada_4.csv",header = T,sep = ",",dec = ".")
 ```
 
 
-```{r echo=F,warning=F,eval=F}
+```{r echo=F,warning=F}
+data <- data.frame()
+aux <- data.frame()
 for(i in dir()){
   aux <- read.csv(i,header = T,sep = ",",dec = ".")
   names(aux)<- c("index","x","y","class")
@@ -47,7 +49,7 @@ data
 
 1.  Grafica de los puntos contenidos en cada set de datos:
 
-```{r echo=FALSE,eval=F}
+```{r echo=FALSE}
 for(i in 1:4){
   subs<- subset(data,subset = data$id == i)
   plot(subs$x,subs$y,col =subs$class, xlab = "x",ylab = "y",main = paste("Set de datos",i,sep=" "))
@@ -64,40 +66,174 @@ disimilaridad $d(ij)$ tal que $\forall i, j, k$:
 donde D es una matriz simetrica y su diagonal son 0.
 \newpage
 
-Para la disimilaridad $d(i,j)$ representa una medida de la diferencia entre dos observaciones $x_{i}$ y $x_{j}$ en este caso usaremos la disimilaridad basada en distancia manhattan dado que ningun valor :
+Para la disimilaridad $d(i,j)$ representa una medida de la diferencia entre dos observaciones $x_{i}$ y $x_{j}$ en este caso usaremos la disimilaridad basada en distancia euclideana dado que no tenemos ninguna evidencia que la diferencia entre los individuos sea diferente de 0:
 
 $d(i,j) =  \sqrt{\sum_{i=1}^{p}(x_{ic}-x_{cj})^2}$
-
-$d(i,j) =  \sum_{i=1}^{p}\|(x_{ic}-x_{cj})\|$
 
 especificamente el criterio de vecino mas cercano expresado como :
 
 $d_{UV}=min( d_{ij} ): i \in U, j \in V$
 
-ya que, los conglomerados formados por este data set no poseen formas estrictamente esfericas y por lo tanto se ajustarian mas (teoricamente) las comparaciones individuales de vecino mas cernano.
+ya que, los conglomerados formados por este data set no poseen formas estrictamente esfericas y por lo tanto se ajustarian mas (teoricamente) las comparaciones individuales de vecino mas cercano.
 
 3.  Para cada dataset se generaron los siguientes dendrogramas(uno por cada metodo):
 
-```{r echo=FALSE, eval=FALSE}
-distances <-c("euclidean","manhattan")
+```{r echo=FALSE}
 metodos <- c("ward.D", "ward.D2", "single", "complete", "average", "mcquitty","median","centroid")
 for(i in metodos){
-  for(j in 1:4){
-  subs<- subset(data,subset = data$id == j)
-  distanceE <- dist(subs[-c(1,2,5)],method = distances[1])
-  distanceM <- dist(subs[-c(1,2,5)],method = distances[2])
-  clusterE <- hclust(distanceE,method = i)
-  clusterM <- hclust(distanceM,method = i)
-  corteE <- cutree(clusterE,k=length(unique(subs$class)))
-  corteM <- cutree(clusterM,k=length(unique(subs$class)))
-  confME <- matrix(rep(0,16),ncol=4,byrow = T)
-  for(i in 1:4){
-    for(j in 1:4){
-      confME[i,j] <- length(subset(corteE, subset = (corteE== i)))
-    }
+  subs<- subset(data,subset = data$id == 1)
+  distanceE1 <- dist(subs[-c(1,2,5)],method = "euclidean")
+  clusterE1 <- hclust(distanceE1,method = i)
+  plot(clusterE1)
+  corteE1 <- cutree(clusterE1,k=length(unique(subs$class)))
+  table(corteE1,subs$class)
+  if(sum(diag(table(corteE1,subs$class))) == nrow(subs)){
+    mejor1 <-clusterE1
   }
-  confMM <- 
+  #------------------------------------------------------
+  subs<- subset(data,subset = data$id == 2)
+  distanceE2 <- dist(subs[-c(1,2,5)],method = "euclidean")
+  clusterE2 <- hclust(distanceE2,method = i)
+  plot(clusterE2)
+  corteE2 <- cutree(clusterE2,k=length(unique(subs$class)))
+  table(corteE2,subs$class)
+  if(sum(diag(table(corteE2,subs$class))) == nrow(subs)){
+    mejor2 <-clusterE2
+  }
+  #------------------------------------------------------
+  subs<- subset(data,subset = data$id == 3)
+  distanceE3 <- dist(subs[-c(1,2,5)],method = "euclidean")
+  clusterE3 <- hclust(distanceE3,method = i)
+  plot(clusterE3)
+  corteE3 <- cutree(clusterE3,k=length(unique(subs$class)))
+  table(corteE3,subs$class)
+  if(i=="ward.D"){
+    mejor3 <- clusterE3
+    mejor3$precision <- sum(diag(table(corteE3,subs$class)))
+  }
+  if(sum(diag(table(corteE3,subs$class))) > mejor3$precision){
+    mejor3 <- clusterE3
+    mejor3$precision <- sum(diag(table(corteE3,subs$class)))
+  }
+  #------------------------------------------------------
+  subs<- subset(data,subset = data$id == 4)
+  distanceE4 <- dist(subs[-c(1,2,5)],method = "euclidean")
+  clusterE4 <- hclust(distanceE4,method = i)
+  plot(clusterE4)
+  corteE4 <- cutree(clusterE4,k=length(unique(subs$class)))
+  table(corteE4,subs$class)
+  if(i=="ward.D"){
+    mejor4 <- clusterE4
+    mejor4$precision <- sum(diag(table(corteE4,subs$class)))
+  }
+  if(sum(diag(table(corteE4,subs$class))) > mejor4$precision){
+    mejor4 <- clusterE4
+    mejor4$precision <- sum(diag(table(corteE4,subs$class)))
   }
 }
+
+```
+
+Cada matriz de confusión se hallo perfecta la precisión para el caso en que se utilizaba el metodo "single" o mas cercano.
+
+
+
+4.  Sea el dendrograma ganador
+
+```{r}
+for(i in 2:5){
+  cat("para el set de datos 1 el dendrograma debe tener altura")
+  sort(mejor1$height,decreasing = T)[i]
+  cat("para i =",i," cluster")
+  cat("para el set de datos 2 el dendrograma debe tener altura")
+  sort(mejor2$height,decreasing = T)[i]
+  cat("para i =",i," cluster")
+  cat("para el set de datos 3 el dendrograma debe tener altura")
+  sort(mejor3$height,decreasing = T)[i]
+  cat("para i =",i," cluster")
+  cat("para el set de datos 4 el dendrograma debe tener altura")
+  sort(mejor4$height,decreasing = T)[i]
+  cat("para i =",i," cluster")
+}
+
+```
+
+5.  dado que las clases de los sets de datos de entrada poseen todos 4 clases, luego seleccionemos este valor como k para cortar el arbol
+
+```{r}
+sort(mejor1$height,decreasing = T)[4]
+sort(mejor2$height,decreasing = T)[4]
+sort(mejor3$height,decreasing = T)[4]
+sort(mejor4$height,decreasing = T)[4]
+```
+
+6.  Grafica de los dendrogramas ganadores segun el mejor numero de altura:
+
+```{r}
+mejorcorte1 <- cutree(mejor1,h=sort(mejor1$height,decreasing = T)[4])
+mejorcorte2 <- cutree(mejor2,h=sort(mejor1$height,decreasing = T)[4])
+mejorcorte3 <- cutree(mejor3,h=sort(mejor1$height,decreasing = T)[4])
+mejorcorte4 <- cutree(mejor4,h=sort(mejor1$height,decreasing = T)[4])
+```
+
+7.  Dado que se conoce la clasificación en 4 diferentes conjuntos de la data se usara el k= 4
+
+8.  Grafica de la clusterizacion mediante k-medias y sus centros:
+
+```{r}
+for(i in 1:4){
+  subs<- subset(data,subset = data$id == i)
+  kmd <- kmeans(subs[c(3,4)],4)
+  plot(subs[c(3,4)], col = kmd$cluster, xlab = "x",ylab = "y",main = paste("Set de datos",i,sep=" "))
+  points(kmd$centers, col = 1:4, pch = 8)
+}
+```
+
+9.  Para set de datos en los cuales la ubicación de los puntos o individuos posee una forma esferica puede ser conveniente el uso de k-medias, y para clusterizacion de formas no-esfericas proveen mayor precision los metodos de clasificación jerárquica por aglomeración(en este caso)
+
+
+10. para calcular la clasificacion de la nueva instancia la agregamos a los sets y corremos los alogritmos de clusterizacion respectivos.
+
+```{r}
+  subs<- subset(data,subset = data$id == 1)
+  subs1 <- rbind(subs[-c(1,2,5)],c(3,3))
+  distanceE1 <- dist(subs1,method = "euclidean")
+  clusterE1 <- hclust(distanceE1,method = mejor1$method)
+  corteE1 <- cutree(clusterE1,k=length(unique(subs$class)))
+  cat("en el Set 1")
+  cat("en clasificacion jerarquica por aglomeracion",last(corteE1))
+  kmd <- kmeans(subs1,4)
+  cat("en K-medias por otro lado reultaria en el cluster",kmd$cluster)
+  #----------------------------------------------------------------
+  subs<- subset(data,subset = data$id == 2)
+  subs2 <- rbind(subs[-c(1,2,5)],c(3,3))
+  distanceE2 <- dist(subs2,method = "euclidean")
+  clusterE2 <- hclust(distanceE2,method = mejor2$method)
+  corteE2 <- cutree(clusterE2,k=length(unique(subs$class)))
+  cat("en el Set 2")
+  cat("en clasificacion jerarquica por aglomeracion",last(corteE2))
+  kmd <- kmeans(subs2,4)
+  cat("en K-medias por otro lado reultaria en el cluster",kmd$cluster)
+  #----------------------------------------------------------------
+  subs<- subset(data,subset = data$id == 3)
+  subs3 <- rbind(subs[-c(1,2,5)],c(3,3))
+  distanceE3 <- dist(subs3,method = "euclidean")
+  clusterE3 <- hclust(distanceE3,method = mejor3$method)
+  corteE3 <- cutree(clusterE3,k=length(unique(subs$class)))
+  cat("en el Set 3")
+  cat("en clasificacion jerarquica por aglomeracion",last(corteE3))
+  kmd <- kmeans(subs3,4)
+  cat("en K-medias por otro lado reultaria en el cluster",kmd$cluster)
+  #----------------------------------------------------------------
+  subs<- subset(data,subset = data$id == 4)
+  subs4 <- rbind(subs[-c(1,2,5)],c(3,3))
+  distanceE4 <- dist(subs4,method = "euclidean")
+  clusterE4 <- hclust(distanceE4,method = mejor4$method)
+  corteE4 <- cutree(clusterE4,k=length(unique(subs$class)))
+  cat("en el Set 4")
+  cat("en clasificacion jerarquica por aglomeracion",last(corteE4))
+  kmd <- kmeans(subs4,4)
+  cat("en K-medias por otro lado reultaria en el cluster",kmd$cluster)
+  #----------------------------------------------------------------
 
 ```
