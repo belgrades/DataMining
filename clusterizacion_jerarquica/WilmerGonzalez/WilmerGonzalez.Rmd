@@ -20,7 +20,7 @@ Responder todas las preguntas presentadas por _Abastos Crema_ usando los método
 Muestras de laboratorio provistas por el cliente.
 
 ```{r}
-setwd("C:\\Users\\isys\\Documents\\DataMining\\clusterizacion_jerarquica\\tarea")
+#setwd("C:\\Users\\isys\\Documents\\DataMining\\clusterizacion_jerarquica\\tarea")
 
 data1 <-  read.csv(file= "entrada_1.csv",header = T,sep = ",",dec = ".")
 data2 <-  read.csv(file= "entrada_2.csv",header = T,sep = ",",dec = ".")
@@ -77,7 +77,8 @@ ya que, los conglomerados formados por este data set no poseen formas estrictame
 3.  Para cada dataset se generaron los siguientes dendrogramas(uno por cada metodo):
 
 ```{r eval=T}
-metodos <- c("ward.D", "ward.D2", "single", "complete", "average", "mcquitty","median","centroid")
+metodos <- c("ward.D", "ward.D2", "single", "complete", "average",
+             "mcquitty","median","centroid")
 for(i in metodos){
   subs<- subset(data,subset = data$id == 1)
   distanceE1 <- dist(subs[-c(1,2,5)],method = "euclidean")
@@ -87,6 +88,7 @@ for(i in metodos){
   print(table(corteE1,subs$class))
   if(sum(diag(table(corteE1,subs$class))) == nrow(subs)){
     mejor1 <-clusterE1
+    mejor1$corte <- corteE1
   }
   #------------------------------------------------------
   subs<- subset(data,subset = data$id == 2)
@@ -97,6 +99,7 @@ for(i in metodos){
   print(table(corteE2,subs$class))
   if(sum(diag(table(corteE2,subs$class))) == nrow(subs)){
     mejor2 <-clusterE2
+    mejor2$corte <- corteE2
   }
   #------------------------------------------------------
   subs<- subset(data,subset = data$id == 3)
@@ -108,10 +111,12 @@ for(i in metodos){
   if(i=="ward.D"){
     mejor3 <- clusterE3
     mejor3$precision <- sum(diag(table(corteE3,subs$class)))
+    mejor3$corte <- corteE3
   }
   if(sum(diag(table(corteE3,subs$class))) > mejor3$precision){
     mejor3 <- clusterE3
     mejor3$precision <- sum(diag(table(corteE3,subs$class)))
+    mejor3$corte <- corteE3
   }
   #------------------------------------------------------
   subs<- subset(data,subset = data$id == 4)
@@ -123,20 +128,33 @@ for(i in metodos){
   if(i=="ward.D"){
     mejor4 <- clusterE4
     mejor4$precision <- sum(diag(table(corteE4,subs$class)))
+    mejor4$corte <- corteE4
   }
   if(sum(diag(table(corteE4,subs$class))) > mejor4$precision){
     mejor4 <- clusterE4
     mejor4$precision <- sum(diag(table(corteE4,subs$class)))
+    mejor4$corte <- corteE4
   }
 }
 
 ```
 
-Cada matriz de confusión se hallo perfecta la precisión para el caso en que se utilizaba el metodo "single" o mas cercano.
+Para decidir el mejor dendrograma se selecciono encontrando aquel que maximizara la suma de las diagonales, i.e., la precisión al clasificar cada clase como realmente esta clasificada en el set de datos original.
+
+```{r}
+print("Para el set de datos 1 el mejor dendrograma fue el que poseyo las siguientes configuraciones")
+mejor1
+print("Para el set de datos 2 el mejor dendrograma fue el que poseyo las siguientes configuraciones")
+mejor2
+print("Para el set de datos 3 el mejor dendrograma fue el que poseyo las siguientes configuraciones")
+mejor3
+print("Para el set de datos 4 el mejor dendrograma fue el que poseyo las siguientes configuraciones")
+mejor4
+```
 
 
 
-4.  Sea el dendrograma ganador
+4.  Sea cada dendrograma ganador
 
 ```{r}
 for(i in 2:5){
@@ -156,7 +174,7 @@ for(i in 2:5){
 
 ```
 
-5.  dado que las clases de los sets de datos de entrada poseen todos 4 clases, luego seleccionemos este valor como k para cortar el arbol
+5.  dado que las clases de los sets de datos de entrada poseen todos 4 clases, luego seleccionemos este valor como k para encontrar un arbol en cuya altura produzca k numero de clúster
 
 ```{r}
 sort(mejor1$height,decreasing = T)[4]
@@ -165,7 +183,7 @@ sort(mejor3$height,decreasing = T)[4]
 sort(mejor4$height,decreasing = T)[4]
 ```
 
-6.  Grafica de los dendrogramas ganadores segun el mejor numero de altura:
+6.  Grafica de los dendrogramas ganadores segun el mejor numero de altura (cada corte representa la parte superior del arbol cortado en dicha altura):
 
 ```{r}
 mejor1$dendo <- as.dendrogram(mejor1)
@@ -194,15 +212,32 @@ plot(mejorcorte4, main = "Corte con altura ideal")
 for(i in 1:4){
   subs<- subset(data,subset = data$id == i)
   kmd <- kmeans(subs[c(3,4)],4)
-  plot(subs[c(3,4)], col = kmd$cluster, xlab = "x",ylab = "y",main = paste("Set de datos",i,sep=" "))
+  plot(subs[c(3,4)], col = kmd$cluster, xlab = "x",ylab = "y",
+       main = paste("Set de datos",i,sep=" "))
   points(kmd$centers, col = 1:4, pch = 8)
+  print("matriz de confusion de aplicacion de k-medias")
+  print(table(kmd$cluster,subs$class))
+  if(i==1) {
+    print("matriz de confusion de aplicacion de clasificacion por aglomeración")
+    print(table(mejor1$corte,subs$class))}
+  if(i==2) {
+    print("matriz de confusion de aplicacion de clasificacion por aglomeración")
+    print(table(mejor2$corte,subs$class))}
+  if(i==3) {
+    print("matriz de confusion de aplicacion de clasificacion por aglomeración")
+    print(table(mejor3$corte,subs$class))}
+  if(i==4) {
+    print("matriz de confusion de aplicacion de clasificacion por aglomeración")
+    print(table(mejor4$corte,subs$class))}
 }
 ```
 
-9.  Para set de datos en los cuales la ubicación de los puntos o individuos posee una forma esferica puede ser conveniente el uso de k-medias, y para clusterizacion de formas no-esfericas proveen mayor precision los metodos de clasificación jerárquica por aglomeración(en este caso)
+9.  Para set de datos en los cuales la ubicación de los puntos o individuos posee una forma esferica puede ser conveniente el uso de k-medias, y para clusterizacion de formas no-esfericas proveen mayor precision los metodos de clasificación jerárquica por aglomeración.
+
+Por ejemplo para el set 4 genera diferentes combinaciones de clúster y de centros, que no necesariamente convergen a un mismo resultado.
 
 
-10. para calcular la clasificacion de la nueva instancia la agregamos a los sets y corremos los alogritmos de clusterizacion respectivos.
+10. para calcular la clasificación de la nueva instancia la agregamos a los sets y corremos los alogritmos de clusterización respectivos.
 
 ```{r}
   subs<- subset(data,subset = data$id == 1)
