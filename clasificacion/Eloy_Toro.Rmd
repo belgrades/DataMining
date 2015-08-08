@@ -6,6 +6,23 @@ output: pdf_document
 ---
 
 ```{r echo=FALSE}
+#source("../install.R")
+#Creamos la función que recibe los paquetes
+install = function(pkg){
+  #Si ya está instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg, repos = "http:/cran.rstudio.com")
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+#Instalamos primero "foreach"
+install("foreach")
+
+#Seleccionamos los archivos que queremos instalar
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "rpart.plot", "tree", "RWeka", "C50")
+foreach(i = archive) %do% install(i)
+
 url = "http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
 data.set = read.csv(url, header = F, sep = ",")
 names(data.set) <- c("buying", "maint", "doors", "persons", "lug_boot", "safety", "class")
@@ -48,9 +65,8 @@ prediction = predict(tree_model, small_test_set, type="class")
 table(small_test_set[, "class"], prediction)
 ```
 
-Generando arbol J48
+Arbol de clasificacion
 
 ```{r, echo=FALSE}
-j48 = RWeka::J48(class ~ ., data=training_set)
-plot(j48)
+rpart.plot(tree_model, type=0)
 ```
